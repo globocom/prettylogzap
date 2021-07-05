@@ -6,6 +6,8 @@ import (
 	"os"
 
 	"github.com/fatih/color"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 type (
@@ -100,17 +102,13 @@ func SetColorPadding(name string, c *color.Color, padding int) error {
 	return nil
 }
 
-func NewPrettySink(messageKey, levelKey, timeKey, nameKey, callerKey string) func(u *url.URL) (Sink, error) {
-	config := encoderConfig{
-		MessageKey: messageKey, LevelKey: levelKey,
-		NameKey: nameKey, CallerKey: callerKey,
-	}
-	factory := func(u *url.URL) (Sink, error) {
+func NewPrettySink(encoderConfig zapcore.EncoderConfig) func(u *url.URL) (zap.Sink, error) {
+	factory := func(u *url.URL) (zap.Sink, error) {
 		switch u.Host {
 		case "stdout":
-			return prettySink{Sink: os.Stdout, encoderConfig: config}, nil
+			return prettySink{Sink: os.Stdout, encoderConfig: encoderConfig}, nil
 		case "stderr":
-			return prettySink{Sink: os.Stderr, encoderConfig: config}, nil
+			return prettySink{Sink: os.Stderr, encoderConfig: encoderConfig}, nil
 		}
 		return os.OpenFile(u.Path, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
 	}

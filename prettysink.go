@@ -2,11 +2,12 @@ package prettylogzap
 
 import (
 	"bytes"
-	"io"
 	"strings"
 
 	"github.com/fatih/color"
 	"github.com/tidwall/gjson"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 const (
@@ -15,26 +16,10 @@ const (
 	FieldSeparator = "="
 )
 
-type (
-	Sink interface {
-		io.Writer
-		io.Closer
-		Sync() error
-	}
-
-	encoderConfig struct {
-		MessageKey string
-		LevelKey   string
-		TimeKey    string
-		NameKey    string
-		CallerKey  string
-	}
-
-	prettySink struct {
-		Sink
-		encoderConfig encoderConfig
-	}
-)
+type prettySink struct {
+	zap.Sink
+	encoderConfig zapcore.EncoderConfig
+}
 
 func (w prettySink) Write(p []byte) (int, error) {
 	line, err := w.parse(p)
