@@ -52,8 +52,8 @@ var (
 	}
 
 	ErrNonParseableLine = errors.New("line could not be parsed")
-	ErrInvalidColor     = errors.New("Invalid color")
-	ErrInvalidName      = errors.New("Invalid name")
+	ErrInvalidColor     = errors.New("invalid color")
+	ErrInvalidName      = errors.New("invalid name")
 )
 
 func (s *settings) parseLevel(levelName string) colorPadding {
@@ -100,7 +100,7 @@ func SetColorPadding(name string, c *color.Color, padding int) error {
 	return nil
 }
 
-func NewPrettySinkEncode(messageKey, levelKey, timeKey, nameKey, callerKey string) func(u *url.URL) (Sink, error) {
+func NewPrettySink(messageKey, levelKey, timeKey, nameKey, callerKey string) func(u *url.URL) (Sink, error) {
 	config := encoderConfig{
 		MessageKey: messageKey, LevelKey: levelKey,
 		NameKey: nameKey, CallerKey: callerKey,
