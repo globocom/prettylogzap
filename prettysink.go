@@ -11,9 +11,9 @@ import (
 )
 
 const (
-	Separator      = " "
-	FieldQuotes    = "\""
-	FieldSeparator = "="
+	separator      = " "
+	fieldQuotes    = "\""
+	fieldSeparator = "="
 )
 
 type prettySink struct {
@@ -92,21 +92,21 @@ func (w prettySink) writeTo(buffer *bytes.Buffer, value string, padding int, col
 	value = w.padRight(value, padding)
 	value = color.Sprint(value)
 	buffer.WriteString(value)
-	buffer.WriteString(Separator)
+	buffer.WriteString(separator)
 }
 
 func (w prettySink) writeFieldsTo(buffer *bytes.Buffer, fields [][]string, color *color.Color) {
 	for _, field := range fields {
 		buffer.WriteString(color.Sprint(field[0]))
-		buffer.WriteString(FieldSeparator)
+		buffer.WriteString(fieldSeparator)
 		if strings.Contains(field[1], " ") {
-			buffer.WriteString(FieldQuotes)
+			buffer.WriteString(fieldQuotes)
 			buffer.WriteString(field[1])
-			buffer.WriteString(FieldQuotes)
+			buffer.WriteString(fieldQuotes)
 		} else {
 			buffer.WriteString(field[1])
 		}
-		buffer.WriteString(Separator)
+		buffer.WriteString(separator)
 	}
 }
 
