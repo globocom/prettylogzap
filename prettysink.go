@@ -1,20 +1,22 @@
 package prettylogzap
 
 import (
-	"bytes"
 	"strings"
 
 	"github.com/fatih/color"
 	"github.com/tidwall/gjson"
 	"go.uber.org/zap"
+	"go.uber.org/zap/buffer"
 	"go.uber.org/zap/zapcore"
 )
 
 const (
-	separator      = " "
+	separator      = ' '
+	fieldSeparator = '='
 	fieldQuotes    = "\""
-	fieldSeparator = "="
 )
+
+var pool = buffer.NewPool()
 
 type prettySink struct {
 	zap.Sink
@@ -26,8 +28,7 @@ func (w prettySink) Write(p []byte) (int, error) {
 	if err != nil {
 		return w.Sink.Write(p)
 	}
-	data := w.Prettify(line)
-	return w.Sink.Write(data)
+	return w.Sink.Write(w.prettify(line))
 }
 
 func (w prettySink) Close() error {
@@ -61,59 +62,61 @@ func (w prettySink) parse(line []byte) (*parsedLine, error) {
 	return parsed, nil
 }
 
-func (w prettySink) Prettify(line *parsedLine) []byte {
-	buffer := &bytes.Buffer{}
+func (w prettySink) prettify(line *parsedLine) []byte {
+	buf := pool.Get()
 
 	if line.Timestamp != "" {
-		w.writeTo(buffer, line.Timestamp, prettySettings.timestamp.padding, prettySettings.timestamp.color)
+		w.writeTo(buf, line.Timestamp, prettySettings.timestamp.padding, prettySettings.timestamp.color)
 	}
 
 	if line.Logger != "" {
-		w.writeTo(buffer, line.Logger, prettySettings.logger.padding, prettySettings.logger.color)
+		w.writeTo(buf, line.Logger, prettySettings.logger.padding, prettySettings.logger.color)
 	}
 
 	if line.Caller != "" {
-		w.writeTo(buffer, line.Caller, prettySettings.caller.padding, prettySettings.caller.color)
+		w.writeTo(buf, line.Caller, prettySettings.caller.padding, prettySettings.caller.color)
 	}
 
 	cpLevel := prettySettings.parseLevel(strings.ToLower(line.Level))
 	if line.Level != "" {
-		w.writeTo(buffer, strings.ToUpper(line.Level), cpLevel.padding, cpLevel.color)
+		w.writeTo(buf, strings.ToUpper(line.Level), cpLevel.padding, cpLevel.color)
 	}
 
-	w.writeTo(buffer, line.Message, prettySettings.message.padding, prettySettings.message.color)
-	w.writeFieldsTo(buffer, line.Fields, cpLevel.color)
+	w.writeTo(buf, line.Message, prettySettings.message.padding, prettySettings.message.color)
+	w.writeFieldsTo(buf, line.Fields, cpLevel.color)
 
-	buffer.WriteString("\n")
-	return buffer.Bytes()
+	buf.AppendString("\n")
+	data := buf.Bytes()
+	buf.Free()
+	return data
 }
 
-func (w prettySink) writeTo(buffer *bytes.Buffer, value string, padding int, color *color.Color) {
+func (w prettySink) writeTo(buf *buffer.Buffer, value string, padding int, color *color.Color) {
 	value = w.padRight(value, padding)
 	value = color.Sprint(value)
-	buffer.WriteString(value)
-	buffer.WriteString(separator)
+	buf.AppendString(value)
+	buf.AppendByte(separator)
 }
 
-func (w prettySink) writeFieldsTo(buffer *bytes.Buffer, fields [][]string, color *color.Color) {
+func (w prettySink) writeFieldsTo(buf *buffer.Buffer, fields [][]string, color *color.Color) {
 	for _, field := range fields {
-		buffer.WriteString(color.Sprint(field[0]))
-		buffer.WriteString(fieldSeparator)
+		buf.AppendString(color.Sprint(field[0]))
+		buf.AppendByte(fieldSeparator)
 		if strings.Contains(field[1], " ") {
-			buffer.WriteString(fieldQuotes)
-			buffer.WriteString(field[1])
-			buffer.WriteString(fieldQuotes)
+			buf.AppendString(fieldQuotes)
+			buf.AppendString(field[1])
+			buf.AppendString(fieldQuotes)
 		} else {
-			buffer.WriteString(field[1])
+			buf.AppendString(field[1])
 		}
-		buffer.WriteString(separator)
+		buf.AppendByte(separator)
 	}
 }
 
 func (w prettySink) padRight(str string, size int) string {
 	size -= len(str)
-	if size < 0 {
-		size = 0
+	if size <= 0 {
+		return str
 	}
 	return str + strings.Repeat(" ", size)
 }
