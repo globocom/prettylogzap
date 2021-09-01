@@ -56,6 +56,7 @@ var (
 	ErrNonParseableLine = errors.New("line could not be parsed")
 	ErrInvalidColor     = errors.New("invalid color")
 	ErrInvalidName      = errors.New("invalid name")
+	ErrOutputPath       = errors.New("invalid output path")
 )
 
 func (s *settings) parseLevel(levelName string) colorPadding {
@@ -110,7 +111,7 @@ func NewPrettySink(encoderConfig zapcore.EncoderConfig) func(u *url.URL) (zap.Si
 		case "stderr":
 			return prettySink{Sink: os.Stderr, encoderConfig: encoderConfig}, nil
 		}
-		return os.OpenFile(u.Path, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
+		return nil, ErrOutputPath
 	}
 	return factory
 }
