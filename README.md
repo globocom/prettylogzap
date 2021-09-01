@@ -3,7 +3,7 @@
 Formata a exibição de logs estruturados em JSON em um formato compatível com seres humanos.
 
 
-![Prettylog](https://github.com/globocom/prettylogzap/raw/master/prettylogzap.png)
+![Prettylog](https://github.com/globocom/prettylogzap/blob/main/prettylogzap.png)
 
 
 ## Utilização
