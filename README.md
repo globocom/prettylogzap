@@ -17,7 +17,6 @@ import (
 
 
 func NewLoggerDevelopment() (*zap.Logger, error) {
-
 	// create zap config
 	zapConf = zap.NewDevelopmentConfig()
 	zapConf.DisableCaller = true
